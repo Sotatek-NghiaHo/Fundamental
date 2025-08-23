@@ -67,7 +67,6 @@ Y nghia cac nhanh tren git workflow
 - nhánh "hotfix" được tạ ra từ nhánh main.
 
 # Các Thành Phần Chính Của Git Workflow
-Docs: https://www.ducxinh.com/techblog/git-workflow-cho-team:-huong-dan-toan-dien-ve-quy-trinh-lam-viec
 
 **1. Quy Tắc Commit**  
 Nguyên tắc cơ bản:
@@ -170,6 +169,7 @@ CI/CD là phần không thể thiếu trong modern Git workflow, giúp đảm b�
 
 ---
 **Tài Liệu Tham Khảo**  
+Docs: https://www.ducxinh.com/techblog/git-workflow-cho-team:-huong-dan-toan-dien-ve-quy-trinh-lam-viec
 Docs git commit: https://www.conventionalcommits.org/en/v1.0.0/  
 GitHub Flow: https://guides.github.com/introduction/flow  
 GitLab CI/CD: https://docs.gitlab.com/ee/ci  
