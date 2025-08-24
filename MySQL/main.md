@@ -57,7 +57,7 @@ port = 3306
 systemctl restart mysqld.service
 ```
 
-**3.6. Replicating MySQL**
+**3.6. Replicating MySQL**  
 Để thiết lập sao chép trong MySQL, bạn phải: 
 - Cấu hình máy chủ nguồn 
 - Cấu hình máy chủ bản sao 
