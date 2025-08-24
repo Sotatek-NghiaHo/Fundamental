@@ -31,7 +31,7 @@ Máy chủ HTTP Apache, httpd, là một máy chủ web mã nguồn mở do Apac
 
 ---
 **Chapter 2. Setting up and configuring NGINX**    
-Để cài đặt một gói Debian dựng sẵn, thứ duy nhất cần làm là:
+Để cài đặt một gói Debian dựng sẵn:
 ```
 yum install nginx
 ```
@@ -64,7 +64,8 @@ server {
 }
 ```
 - `access_log` định nghĩa một tệp nhật ký truy cập riêng cho domain này. 
-- `error_log` định nghĩa một tệp nhật ký lỗi riêng cho domain này
+- `error_log` định nghĩa một tệp nhật ký lỗi riêng cho domain này  
+
 Append a similar `server` block for the `example.net` domain to the http block:
 ```
 server {
@@ -189,8 +190,8 @@ systemctl restart nginx
 Docs: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/deploying_different_types_of_servers/setting-up-and-configuring-nginx_deploying-different-types-of-servers
 
 ---
-**Chapter 1. Setting up the Apache HTTP web server**  
-*1.4 The Apache configuration files*  
+**Chapter 1. Setting up the Apache HTTP web server**    
+**1.4 The Apache configuration files**  
 Các tệp cấu hình dịch vụ httpd
 Path | Description
 ---|---
@@ -198,7 +199,7 @@ Path | Description
 `/etc/httpd/conf.d/` | Thư mục phụ trợ cho các tệp cấu hình có trong tệp cấu hình chính.
 `/etc/httpd/conf.modules.d/` | Một thư mục phụ trợ cho các tệp cấu hình tải các mô-đun động đã cài đặt được đóng gói trong Red Hat Enterprise Linux. Trong cấu hình mặc định, các tệp cấu hình này được xử lý trước.
 
-*1.5 Managing the httpd service*  
+**1.5 Managing the httpd service**    
 To start the httpd service:
 ```
 systemctl start httpd
@@ -279,9 +280,70 @@ systemctl enable --now httpd
 ```
 
 **1.9. Configuring TLS encryption on an Apache HTTP Server**  
+Theo mặc định, Apache cung cấp nội dung cho máy khách bằng kết nối HTTP không được mã hóa.     
+Prerequisites
+- The private key is stored in the /etc/pki/tls/private/example.com.key file.
+- The TLS certificate is stored in the /etc/pki/tls/certs/example.com.crt file. 
 
+*Procedure*  
+Install the `mod_ssl` package:
+```
+yum install mod_ssl
+```
+Edit the `/etc/httpd/conf.d/ssl.conf`  
+Set the paths to the private key, the server certificate, and the CA certificate:
 
+Tùy chọn: Nếu chứng chỉ chứa các tên máy chủ bổ sung trong trường Tên Alt Chủ thể (SAN), bạn có thể cấu hình mod_ssl để cung cấp mã hóa TLS cho cả các tên máy chủ này. Để cấu hình, hãy thêm tham số ServerAliases với các tên tương ứng:
+```
+ServerAlias www.example.com server.example.com
+```
+Nếu chứng chỉ SSL của bạn có:
+- CN = example.com
+- SAN = www.example.com, server.example.com
 
+Set the paths to the private key, the server certificate, and the CA certificate:
+```
+SSLCertificateKeyFile "/etc/pki/tls/private/example.com.key"
+SSLCertificateFile "/etc/pki/tls/certs/example.com.crt"
+SSLCACertificateFile "/etc/pki/tls/certs/ca.crt"
+```
+For security reasons, configure that only the root user can access the private key file:
+```
+chown root:root /etc/pki/tls/private/example.com.key
+chmod 600 /etc/pki/tls/private/example.com.key
+```
+If you use firewalld, open port 443 in the local firewall:
+```
+firewall-cmd --permanent --add-port=443/tcp
+firewall-cmd --reload
+```
+Restart the httpd service:
+```
+systemctl restart httpd
+```
+
+Example config
+```
+<VirtualHost *:443>
+    DocumentRoot "/var/www/example.com/"
+    ServerName example.com
+    ServerAlias www.example.com server.example.com
+
+    SSLEngine on
+    SSLCertificateFile /etc/pki/tls/certs/example.com.crt
+    SSLCertificateKeyFile /etc/pki/tls/private/example.com.key
+    SSLCertificateChainFile /etc/pki/tls/certs/ca-bundle.crt
+
+    CustomLog /var/log/httpd/example.com_access.log combined
+    ErrorLog /var/log/httpd/example.com_error.log
+</VirtualHost>
+```
+So sánh file cert Apache vs NGINX
+| Thành phần | Apache  | NGINX|
+| --- | --- | --- |
+| Private key             | `SSLCertificateKeyFile`        | `ssl_certificate_key`           |
+| Domain certificate      | `SSLCertificateFile`           | included in `ssl_certificate`   |
+| CA intermediate | `SSLCACertificateFile` | gộp chung vào `ssl_certificate` |
 
 ---
 **Thiết lập Failover với Keepalived & Virtual IP**  
