@@ -1,11 +1,17 @@
+Required:  
+- Introduction to Git and version control  
+- Gitflow branching model (feature, develop, release, hotfix)  
+- Common Git commands (merge, rebase, stash, log, ...)  
+- Collaboration using pull requests, resolving conflicts  
+---
 # Những câu lệnh Git thông dụng
-Cấu hình tên user,email (toàn cục). Thông tin sẽ hiển thị trong commit history.
+**Cấu hình tên user,email (toàn cục). Thông tin sẽ hiển thị trong commit history.**
 ```bash
 git config --global user.name "Ho Van Nghia"
 git config --global user.email "nghia.ho@sotatek.com"
 ```
 
-Pull toàn bộ repository từ server về máy local.
+**Pull toàn bộ repository từ server về máy local.**
 ```bash
 git clone http://git.nghiahv.tech/shoeshop/shoeshop.git
 ---
@@ -39,15 +45,46 @@ Note:
 - `git merge`: gộp những thay đổi vừa fetch vào nhánh hiện tại của bạn.
 
 
-Git command:  
+**Git command**  
+Làm việc với nhánh
+```bash
+git branch	                      # Liệt kê các nhánh local
+git checkout -b feature/login     # Tạo và chuyển sang nhánh mới
+git switch feature/login          # Chuyển nhánh
+git branch -d feature/login       # Xoá nhánh
+```
+
+Merge & Rebase
+```bash
+git merge feature/login           # Merge nhánh vào nhánh hiện tại
+git rebase develop                # Rebase nhánh hiện tại lên develop
+```
+
+Stash (lưu tạm thay đổi)
+```bash
+git stash                         # Lưu thay đổi tạm thời
+git stash pop                     # Khôi phục lại thay đổi
+```
+
+Kiểm tra lịch sử
+```bash
+git log --oneline --graph --all   # Hiển thị lịch sử commit ngắn gọn
+git diff                          # Xem sự khác biệt
+```
+
+Pull, Push, Fetch
+```bash
+git pull origin develop           # Lấy code mới về và merge
+git push origin feature/login     # Đẩy nhánh lên remote
+git fetch                         # Lấy dữ liệu remote mà chưa merge
+```
+
+
 Git command | Cong dung
 --- | ---
 git init | Khởi tạo repo Git mới trong thư mục hiện tại
 git status | Xem trạng thái file (modified, staged, untracked)
-git log | Xem lịch sử commit
-git branch	| Liệt kê các nhánh local
-git checkout `branch`	|Chuyển sang nhánh khác
-git merge `branch` |Gộp nhánh `branch` vào nhánh hiện tại
+
 
 ---
 # Git workflow   
@@ -60,11 +97,25 @@ Một workflow thường quy định:
 - Quy tắc cộng tác: Đưa ra quy định về việc tạo Pull request, review code trước khi hợp nhất,…
 
 Y nghia cac nhanh tren git workflow
-- nhánh "main" chứa code môi trường người dùng.
-- nhánh "develop" chứa code môi trường phát triển.
-- nhánh "feature" được tạo từ nhánh develop chứa code các chức năng.
-- nhánh "release" chứa code môi trường thử nghiệm.
-- nhánh "hotfix" được tạ ra từ nhánh main.
+- `main` (hoặc `master`)
+  - Chứa mã nguồn ổn định nhất, sẵn sàng để release.
+- `develop`
+  - Nơi tích hợp các tính năng mới, sau đó mới merge vào main.
+- Feature branch (`feature/*`)
+  - Tạo từ `develop`.
+  - Mỗi tính năng (feature) hoặc task có một nhánh riêng.
+  - Khi hoàn thành → merge vào `develop`.
+- Release branch (`release/*`)
+  - Tạo từ `develop` khi chuẩn bị phát hành.
+  - Chỉ fix bug nhỏ, không thêm tính năng mới.
+  - Merge vào `main` (xuất bản) và `develop` (đồng bộ).
+- Hotfix branch (`hotfix/*`)
+  - Tạo từ `main` khi cần sửa lỗi khẩn cấp trên production.
+  - Sau khi sửa → merge vào cả `main` và `develop`
+
+**Workflow:**
+- feature/* → develop → release/* → main
+  (và hotfix/* có thể đi thẳng từ main).
 
 # Các Thành Phần Chính Của Git Workflow
 
@@ -166,6 +217,28 @@ CI/CD là phần không thể thiếu trong modern Git workflow, giúp đảm b�
 - Comment code khi cần thiết
 - Tài liệu API và architecture
 - Changelog cho mỗi version
+
+**Cộng tác qua Pull Request (PR) & giải quyết xung đột**
+- Pull Request (PR):
+  - Khi hoàn thành một feature, ta push nhánh lên remote và tạo PR.
+  - PR giúp review code, kiểm thử trước khi merge vào develop hoặc main.
+- Quy trình cộng tác:
+  - Tạo nhánh từ develop.
+  - Phát triển tính năng và commit.
+  - Push lên remote và mở PR.
+  - Reviewer review, comment, yêu cầu chỉnh sửa nếu cần.
+  - Khi được approve → merge.
+- Xung đột (conflict):
+  - Xảy ra khi 2 người cùng sửa một file (hoặc dòng code) khác nhau.
+  - Git sẽ đánh dấu bằng:
+
+![](pic/3.png)
+
+  - Người phát triển cần chỉnh sửa thủ công, sau đó:
+```
+git add .
+git commit
+```
 
 ---
 **Tài Liệu Tham Khảo**  
