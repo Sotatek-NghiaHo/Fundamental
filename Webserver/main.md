@@ -26,8 +26,13 @@ NGINX là một web server mạnh mẽ mã nguồn mở. Nginx sử dụng kiế
 - Hỗ trợ truyền tải file FLV và MP4
 
 **APACHE**  
-Máy chủ HTTP Apache, httpd, là một máy chủ web mã nguồn mở do Apache Software Foundation phát triển.
-
+Máy chủ HTTP Apache, httpd, là một máy chủ web mã nguồn mở do Apache Software Foundation phát triển. Nó là một phần mềm máy chủ HTTP, có khả năng xử lý các yêu cầu HTTP từ máy tính của người dùng và gửi lại trang web hoặc dữ liệu tương ứng. Web server này thường được kết hợp với các ngôn ngữ lập trình như PHP, Python, hoặc Ruby để xây dựng các ứng dụng web động.  
+Các phiên bản Apache phổ biến thường thấy:
+- Apache Spark
+- Apache Kafka
+- Apache Tomcat
+- Apache NetBeans  
+...
 
 ---
 **Chapter 2. Setting up and configuring NGINX**    
@@ -186,8 +191,6 @@ Restart the nginx service:
 ```
 systemctl restart nginx
 ```
-
-Docs: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/deploying_different_types_of_servers/setting-up-and-configuring-nginx_deploying-different-types-of-servers
 
 ---
 **Chapter 1. Setting up the Apache HTTP web server**    
@@ -394,3 +397,24 @@ sudo systemctl enable keepalived
 sudo systemctl start keepalived
 ```
 Khi Master down, Virtual IP `192.168.1.100` sẽ tự động chuyển sang Backup.
+
+---
+
+Docs: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/deploying_different_types_of_servers/setting-up-and-configuring-nginx_deploying-different-types-of-servers
+
+---
+# So sánh giữa Apache vs NGINX
+![alt text](pic/3.png)
+| Yếu tố | **Apache**| **NGINX**         |
+| --- | --- | ---|
+| **Kiến trúc xử lý**     | Mỗi request thường tạo 1 process/thread → tốn nhiều RAM khi tải cao                     | Dùng **event-driven, asynchronous** → xử lý hàng chục nghìn kết nối đồng thời mà ít tài nguyên |
+| **Hiệu năng**           | Ổn định, nhưng cần tinh chỉnh để tối ưu hiệu suất                                       | Hiệu năng cao mặc định, phù hợp cho web traffic lớn                                            |
+| **Cấu hình**            | Linh hoạt, nhiều module mạnh (mod\_rewrite, mod\_ssl, mod\_php...) nhưng phức tạp       | Cấu hình ngắn gọn, dễ đọc, dễ quản lý                                                          |
+| **Xử lý nội dung động** | Có thể chạy trực tiếp PHP, Python qua module                                            | Thường dùng làm reverse proxy, còn nội dung động chạy qua backend (PHP-FPM, uWSGI, v.v.)       |
+| **Khả năng mở rộng**    | Phù hợp cho nhiều website nhỏ, môi trường hosting truyền thống (cPanel, shared hosting) | Thường được chọn cho hệ thống phân tán, microservices, API gateway                             |
+| **SSL/TLS, HTTP/2/3**   | Hỗ trợ nhưng cần cấu hình                                                               | Hỗ trợ tốt, tích hợp sẵn                                                                       |
+| **Thị trường sử dụng**  | Phổ biến trong server truyền thống, CMS (WordPress, Joomla…)                            | Ưa chuộng trong web hiệu suất cao, CDN, cloud, microservices                                   |
+
+---
+# ----------------------------- END -----------------------------
+---
