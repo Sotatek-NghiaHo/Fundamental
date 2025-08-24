@@ -1,4 +1,4 @@
-# ---------------MYSQL | MYSQL SQL REPLICATION---------------
+# -------------MYSQL | MYSQL SQL REPLICATION-------------
 ---
 Required:  
 - MySQL installation and configuration
