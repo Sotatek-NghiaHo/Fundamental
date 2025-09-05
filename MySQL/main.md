@@ -274,7 +274,7 @@ mysql-bin.000003	|157			| | |5a1f9c1d-...:1-10
 3. Kiểm tra trên Replica
 Trên Replica, có thể dùng:
 ```
-SHOW REPLICA STATUS\G
+SHOW REPLICA STATUS\G 
 ```
 Trong đó cần chú ý:
 - `Replica_IO_Running`: Yes
