@@ -24,7 +24,7 @@ systemctl enable mysqld.service
 ```
 mysql_secure_installation
 ```
-Lệnh này sẽ khởi chạy một tập lệnh tương tác hoàn toàn, nhắc nhở từng bước trong quy trình. Tập lệnh này cho phép bạn cải thiện bảo mật theo những cách sau:
+Lệnh này sẽ khởi chạy một tập lệnh tương tác hoàn toàn, nhắc nhở từng bước trong quy trình. Tập lệnh này cho phép  cải thiện bảo mật theo những cách sau:
 - Đặt mật khẩu cho tài khoản `root`
 - Xóa người dùng ẩn danh
 - Không cho phép đăng nhập `root` từ xa (bên ngoài máy chủ cục bộ)
@@ -58,7 +58,7 @@ systemctl restart mysqld.service
 ```
 
 **3.6. Replicating MySQL**  
-Để thiết lập sao chép trong MySQL, bạn phải: 
+Để thiết lập sao chép trong MySQL: 
 - Cấu hình máy chủ nguồn 
 - Cấu hình máy chủ bản sao 
 - Tạo người dùng sao chép trên máy chủ nguồn 
@@ -86,7 +86,7 @@ Trong mô hình MySQL Replication:
   - Bật `GTID` (Global Transaction Identifier) – giúp MySQL theo dõi transaction một cách duy nhất trên toàn hệ thống.
   - Thuận tiện khi Replica cần đồng bộ, tránh lặp lại hoặc bỏ sót.
 - `enforce-gtid-consistency=ON`
-  - Ép buộc mọi câu lệnh phải tuân thủ tính nhất quán GTID, nghĩa là chỉ cho phép chạy những câu lệnh có thể được log bằng GTID.
+  - Ép buộc mọi câu lệnh  tuân thủ tính nhất quán GTID, nghĩa là chỉ cho phép chạy những câu lệnh có thể được log bằng GTID.
   - Nhờ đó tránh lỗi khi replicate.
 
 *Các tùy chọn bổ sung (không bắt buộc)*
@@ -118,19 +118,19 @@ systemctl restart mysqld.service
   - Ví dụ: `relay-log = /var/log/mysql/mysql-relay-bin.log`
 - `log_bin=path_to_replica_server_log`
   - Bật binary log trên Replica.
-  - Không bắt buộc, nhưng nên bật nếu bạn muốn Replica này có thể làm Source cho Replica khác (chuỗi replication).
+  - Không bắt buộc, nhưng nên bật nếu  muốn Replica này có thể làm Source cho Replica khác (chuỗi replication).
   - Ví dụ: `log_bin = /var/log/mysql/mysql-bin.log`
 - `gtid_mode=ON`
   - Bật GTID (Global Transaction Identifier).
   - Đảm bảo Replica đồng bộ chính xác transaction với Source.
 - `enforce-gtid-consistency=ON`
-  - Ép các lệnh phải tương thích với GTID, tránh lỗi trong replication.
+  - Ép các lệnh  tương thích với GTID, tránh lỗi trong replication.
 - `log-replica-updates=ON`
   - Khi Replica nhận transaction từ Source và áp dụng, nó cũng sẽ ghi transaction đó vào binary log của mình.
   - Cần thiết nếu Replica đóng vai trò trung gian trong replication chain.
 - `skip-replica-start=ON`
   - Khi MySQL khởi động lại, Replica không tự động chạy replication threads.
-  - Điều này giúp bạn kiểm soát việc start/stop replication thủ công (qua lệnh `START REPLICA;`).
+  - Điều này giúp  kiểm soát việc start/stop replication thủ công (qua lệnh `START REPLICA;`).
 
 Các cấu hình tùy chọn
 - binlog_do_db=db_name
@@ -204,7 +204,7 @@ CHANGE REPLICATION SOURCE TO
     SOURCE_AUTO_POSITION=1;
 ```
 - `SOURCE_HOST`: IP hoặc hostname của Source server.
-- `SOURCE_USER`: tài khoản replication bạn đã tạo bên Source.
+- `SOURCE_USER`: tài khoản replication  đã tạo bên Source.
 - `SOURCE_PASSWORD`: mật khẩu của user đó.
 - `SOURCE_AUTO_POSITION=1`: bật GTID-based replication (thay vì chỉ định log file + vị trí).
   - GTID giúp Replica tự động đồng bộ đúng transaction mà không cần quan tâm đến file log nào.
@@ -282,7 +282,7 @@ Trong đó cần chú ý:
 - `Retrieved_Gtid_Set`: GTID nhận được từ Source.
 - `Executed_Gtid_Set`: GTID đã áp dụng trên Replica.
 
-👉 Giá trị `Executed_Gtid_Set` trên Replica phải khớp với Source (ít nhất là không thiếu transaction nào).
+👉 Giá trị `Executed_Gtid_Set` trên Replica  khớp với Source (ít nhất là không thiếu transaction nào).
 
 ---
 Docs: https://docs.redhat.com/fr/documentation/red_hat_enterprise_linux/9/html/configuring_and_using_database_servers/installing-mysql_assembly_using-mysql
