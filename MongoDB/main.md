@@ -1,25 +1,120 @@
-Docs: https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
+# Install mongodb
 
-Install mongodb
-
-```markdown
-apt-get install gnupg curl
-curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc |    sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg    --dearmor
-cat /etc/os-release 
-echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
-sudo apt-get update
-sudo apt-get install -y mongodb-org
-ps --no-headers -o comm 1
-systemctl start mongod
-netstat -tulpn
-
+```bash
+vi /etc/yum.repos.d/mongodb-org-8.2.repo
+<
+[mongodb-org-8.2]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/9/mongodb-org/8.2/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://pgp.mongodb.com/server-8.2.asc
+>
 ```
+Install MongoDB Community Server.
+To install the latest stable version of MongoDB, issue the following command:
+```
+sudo yum install -y mongodb-org
+```
+Alternatively, to install a specific release of MongoDB, specify each component package individually and append the version number to the package name, as in the following example:
+```bash
+sudo yum install -y mongodb-org-8.2.0 mongodb-org-database-8.2.0 mongodb-org-server-8.2.0 mongodb-mongosh mongodb-org-mongos-8.2.0 mongodb-org-tools-8.2.0
+```
+> Note: mongodb version 8 need avx cpu → Use vmware (virtual box error)
+---
 
-Note: mongodb version 8 need avx cpu → Use vmware (virtual box error)
+## Directory Paths
+To Use Default Directories
+By default, MongoDB runs using the mongod user account and uses the following default directories:
+
+- `/var/lib/mongo` (the data directory)
+
+- `/var/log/mongodb` (the log directory)
+
+The package manager creates the default directories during installation. The owner and group name are mongod.
 
 ---
 
-## 🧱 1. **Kết nối Mongo Shell**
+Install the SELinux Policy
+1. Ensure you have the following packages installed:
+- git
+- make
+- checkpolicy
+- policycoreutils
+- selinux-policy-devel
+```
+sudo yum install git make checkpolicy policycoreutils selinux-policy-devel
+```
+2. Download the policy repository.
+```
+git clone https://github.com/mongodb/mongodb-selinux
+```
+3. Build the policy.
+```
+cd mongodb-selinux
+make
+```
+4. Apply the policy.
+```
+sudo make install
+```
+---
+
+1. Start MongoDB.
+```
+sudo systemctl start mongod
+```
+If you receive an error similar to the following when starting mongod:
+
+Failed to start mongod.service: Unit mongod.service not found.
+
+Run the following command first:
+```
+sudo systemctl daemon-reload
+```
+Then run the start command above again.
+
+2. Verify that MongoDB has started successfully.
+```
+sudo systemctl status mongod
+sudo systemctl enable mongod
+```
+3. Stop MongoDB.
+```
+sudo systemctl stop mongod
+```
+4. Restart MongoDB.
+```
+sudo systemctl restart mongod
+```
+5. Begin using MongoDB.
+```
+mongosh
+```
+
+---
+## Uninstall MongoDB Community Edition
+1. Stop MongoDB.
+Stop the mongod process by issuing the following command:
+```
+sudo service mongod stop
+```
+2. Remove Packages.
+Remove any MongoDB packages that you had previously installed.
+```
+sudo yum erase $(rpm -qa | grep mongodb-org)
+```
+3. Remove Data Directories.
+Remove MongoDB databases and log files.
+```
+sudo rm -r /var/log/mongodb
+sudo rm -r /var/lib/mongo
+```
+
+
+---
+
+## 1. **Kết nối Mongo Shell**
 
 ```bash
 mongosh
@@ -30,13 +125,13 @@ mongosh
 
 ---
 
-## 📂 2. **Danh sách database**
+## 2. **Danh sách database**
 
 ```jsx
 show dbs
 ```
 
-## 📁 3. **Tạo / chuyển database**
+## 3. **Tạo / chuyển database**
 
 ```jsx
 use myDatabase
@@ -47,7 +142,7 @@ use myDatabase
 
 ---
 
-## 📦 4. **Tạo collection (giống như table)**
+## 4. **Tạo collection (giống như table)**
 
 ```jsx
 db.createCollection("myCollection")
@@ -60,7 +155,7 @@ db.myCollection.insertOne({ name: "Nghia"})
 
 ---
 
-## 🧾 5. **Thêm dữ liệu (document) vào collection**
+## 5. **Thêm dữ liệu (document) vào collection**
 
 ```jsx
 db.myCollection.insertOne({ name: "Nghia", age: 25 })
@@ -77,7 +172,7 @@ db.myCollection.insertMany([
 
 ---
 
-## 🔎 6. **Truy vấn dữ liệu**
+## 6. **Truy vấn dữ liệu**
 
 ```jsx
 db.myCollection.find()                 // Hiển thị tất cả
@@ -92,7 +187,7 @@ db.myCollection.find().pretty()
 
 ---
 
-## ✏️ 7. **Cập nhật dữ liệu**
+## 7. **Cập nhật dữ liệu**
 
 ```jsx
 db.myCollection.updateOne(
@@ -103,7 +198,7 @@ db.myCollection.updateOne(
 
 ---
 
-## ❌ 8. **Xoá dữ liệu**
+## 8. **Xoá dữ liệu**
 
 ```jsx
 db.myCollection.deleteOne({ name: "Tuan" })
@@ -111,7 +206,7 @@ db.myCollection.deleteOne({ name: "Tuan" })
 
 ---
 
-## 🧾 9. **Danh sách collection**
+## 9. **Danh sách collection**
 
 ```jsx
 show collections
@@ -119,7 +214,7 @@ show collections
 
 ---
 
-## 🗑️ 10. **Xoá collection hoặc database**
+## 10. **Xoá collection hoặc database**
 
 ```jsx
 db.myCollection.drop()  // Xoá collection
@@ -128,7 +223,7 @@ db.dropDatabase()       // Xoá database hiện tại
 
 ---
 
-## 🔐 11. **Tạo user mới**
+## 11. **Tạo user mới**
 
 Kích hoạt xác thực (nếu chưa): trong file cấu hình `mongod.conf`, bật:
 
@@ -171,13 +266,13 @@ db.createUser({
 
 ---
 
-## 🔐 12. **Đăng nhập với user**
+## 12. **Đăng nhập với user**
 
 ```bash
 mongosh -u "myUser" -p "myPass" --authenticationDatabase "myDatabase"
 ```
 
-## 🧾 5. **Hiển thị danh sách user trong database hiện tại**
+## 13. **Hiển thị danh sách user trong database hiện tại**
 
 ```jsx
 use mydb
@@ -195,7 +290,7 @@ db.getUsers()
 
 ---
 
-## 🔍 6. **Xem tất cả user trên MongoDB**
+## 14. Xem tất cả user trên MongoDB
 
 Chuyển về database `admin`:
 
@@ -209,7 +304,7 @@ db.system.users.find().pretty()
 
 ---
 
-## 🧹 7. **Xóa user**
+## 15. **Xóa user**
 
 ```jsx
 js
@@ -246,3 +341,7 @@ check log
 ---
 
 setParameter: enableLocalhostAuthBypass: false
+
+---
+## Docs: 
+https://www.mongodb.com/docs/manual/administration/install-community/?linux-distribution=red-hat&linux-package=default&operating-system=linux&search-linux=with-search-linux
