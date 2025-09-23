@@ -142,3 +142,31 @@ sentinel parallel-syncs mymaster 1
 # Ap dung
 redis-sentinel /etc/redis/sentinel/sentinel.conf
 ```
+## Test Failover
+```bash
+# Server master
+[root@servera ~]# systemctl stop redis
+
+# Server bat ky - server slave
+[root@serverb ~]# redis-cli -h 192.168.38.127 -p 26379
+192.168.38.127:26379> SENTINEL GET-MASTER-ADDR-BY-NAME mymaster
+1) "192.168.38.127"
+2) "6379"
+192.168.38.127:26379> SENTINEL SENTINELS mymaster
+1)  1) "name"
+    2) "2ffdb2d0ebde9d1e5b87c92cb3ace6801a28bdca"
+    3) "ip"
+    4) "192.168.38.129"
+    5) "port"
+    6) "26379"
+    ...
+2)  1) "name"
+    2) "ef4e3230f8b417b417da1147caa40aba230b269a"
+    3) "ip"
+    4) "192.168.38.128"
+    5) "port"
+    6) "26379"
+    ...
+ 
+
+```
