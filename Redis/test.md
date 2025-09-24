@@ -82,23 +82,30 @@ Edit the Redis configuration file (`vi /etc/redis/redis.conf`) with essential se
 bind 192.168.38.130
 requirepass passwd
 masterauth passwd
- Restart and enable the Redis service:
+```
+Restart and enable the Redis service:
+```
 systemctl restart redis
 systemctl enable redis
-B. Slave Configuration (e.g.,  192.168.38.132):
+```
+#### B. Slave Configuration (e.g.,  192.168.38.132):
 Edit the configuration file (vi /etc/redis/redis.conf) to configure replication pointing to the initial master (192.168.38.130):
+```
 bind 192.168.38.132
 replicaof 192.168.38.130 6379
 protected-mode no
 daemonize no
 masterauth passwd
 requirepass passwd
- Restart and enable the Redis service.
-C. Firewall Configuration (Master-Slave Communication):
+```
+Restart and enable the Redis service.
+#### C. Firewall Configuration (Master-Slave Communication):
 Ensure the firewall allows traffic on ports 6379 (Redis data) and 26379 (Sentinel) from the local network subnet (192.168.38.0/24):
+```
 firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.38.0/24" port port=6379 protocol=tcp accept'
 firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.38.0/24" port port=26379 protocol=tcp accept'
 firewall-cmd --reload
+```
 2.3. Sentinel Configuration
 Sentinel must be configured on all three servers.
 1. Sentinel Configuration File: The configuration defines the monitored master, named mymaster, which is initially located at 192.168.38.132 (based on the observation that the initial master role switched shortly after configuration). A quorum of 2 is required for failover.
