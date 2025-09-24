@@ -461,4 +461,8 @@ repl_backlog_histlen:451456
 192.168.38.132:6379> 
 ```
 
+- Cần làm rõ việc bind - service -firewall 
+- giải thích vài tham số cấu hình
+- đặt passwod base64
+- cần tối thiểu mô hình như nào
 
