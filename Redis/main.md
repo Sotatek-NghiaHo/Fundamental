@@ -1,17 +1,59 @@
+# Redis Sentinel and PostgreSQL 14 Deployment Guide
+
+This document outlines the prerequisites, deployment steps, and verification procedures for setting up Redis (with Sentinel high availability) and PostgreSQL 14, drawing exclusively from the provided technical excerpts.
+
+# 1. Prerequisite
+
+### Compute (OS, Hardware, Storage)
+
+| Component | Requirement | Details | Citation |
+| :--- | :--- | :--- | :--- |
+| **Operating System** | RHEL 9.x (x86_64) | Red Hat Enterprise Linux 9.x 64-bit architecture | [1] |
+| **CPU** | Minimum 2 cores | Recommended 4 cores or more | [1] |
+| **Memory (Redis)** | 2 GB RAM or more | Required for Redis operations | [1] |
+| **Memory (PostgreSQL)** | 4 GB RAM or more | Required for PostgreSQL operations | [1] |
+| **Storage (Redis)** | 10 GB SSD | Must be I/O optimized | [1] |
+| **Storage (PostgreSQL)** | 50 GB SSD or more | Required storage capacity | [1] |
+| **Disk Format** | XFS or EXT4 | Acceptable file system formats | [1] |
+
+### Network (Firewall, Security, Topology)
+
+| Component | Requirement | Details | Citation |
+| :--- | :--- | :--- | :--- |
+| **Firewall** | Open required ports | Services require specific ports open for communication. | [1] |
+| **Redis Client Port** | 6379 (TCP) | Client connection port | [1] |
+| **Redis Sentinel Port** | 26379 (TCP) | Sentinel monitoring and communication port | [1] |
+| **PostgreSQL Port** | 5432 (TCP) | PostgreSQL database connection port | [1] |
+| **Security (SELinux)** | Enforcing or Permissive | Custom policy should be added for Redis/PostgreSQL if necessary | [1] |
+| **Security (Admin)** | SSH key-based access | Recommended for administrative access | [1] |
+| **Cluster Network** | VPN or private network | Recommended for cluster nodes [2] |
+
+### Software and Tools
+
+| Component | Version | Role | Citation |
+| :--- | :--- | :--- | :--- |
+| **Redis** | 6.2.16 | Database software | [1, 3, 4] |
+| **PostgreSQL** | 14.0.0 | Database software | [1, 5] |
+| **Tools** | psql, redis-cli, redis-sentinel, systemctl | Required utilities for management and operation | [2] |
+| **Haproxy** | 2.4.22 |-  | - |
+
+
 # Triển khai Redis Sentinel với 3 Server
 
 ## Mô hình
 
 | Server  | IP             | Role             |
 | ------- | -------------- | ---------------- |
-| servera | 192.168.38.130 | master + sentinel |
-| serverb | 192.168.38.132 | slave + sentinel  |
-| serverc | 192.168.38.133 | sentinel          |
-
+| servere | 192.168.38.130 | master + sentinel |
+| serverf | 192.168.38.132 | slave + sentinel  |
+| serverg | 192.168.38.133 | slave + sentinel  |
+| serverd | 192.168.38.131 | haproxy          |
 ---
+## 2. Deployment: Steps
+
+### 2.1. Installation
 
 ## 1. Cài đặt Redis trên 3 server
-Docs: https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/rpm/
 
 ```
 [root@servere ~]# yum list redis
@@ -40,10 +82,10 @@ postgresql14.x86_64                 14.0-1                 @local-postgresql
 
 ```
 
-Install
+1.  **Install Redis and PostgreSQL:**
 ```
-yum install redis.x86_64 
-yum install postgresql14.x86_64 
+yum install redis.x86_64 -y
+yum install postgresql14.x86_64 -y
 redis-server --version
 Redis server v=6.2.16 sha=00000000:0 malloc=jemalloc-5.1.0 bits=64 build=85a2e85bf3a77649
 
@@ -86,8 +128,10 @@ psql (PostgreSQL) 14.0
 
 •	Kiểm tra phiên bản Redis:  
 ```
-[root@serverb ~]# redis-cli --version
-redis-cli 8.2.1
+[root@servere ~]# redis-cli --version
+redis-cli 6.2.16
+[root@servere ~]# 
+
 ```
 
 ### Master (servera - 192.168.38.130)
@@ -106,8 +150,8 @@ systemctl enable redis
 Kiểm tra:
 ```
 redis-cli
-AUTH passwd
-INFO REPLICATION
+auth passwd
+info replication
 ```
 
 ### Slave (serverb - 192.168.38.132)
@@ -129,53 +173,25 @@ systemctl enable redis
 
 **Kiểm tra vai trò:**
 ```
-[root@serverf ~]# redis-cli -h 192.168.38.130
-192.168.38.130:6379> auth passwd
+[root@serverg ~]# redis-cli -h 192.168.38.133 -p 6379
+192.168.38.133:6379> auth passwd
 OK
-192.168.38.130:6379> info replication
-# Replication
-role:slave
-master_host:192.168.38.132
-master_port:6379
-master_link_status:up
-master_last_io_seconds_ago:0
-master_sync_in_progress:0
-slave_read_repl_offset:365096
-slave_repl_offset:365096
-slave_priority:100
-slave_read_only:1
-replica_announced:1
-connected_slaves:0
-master_failover_state:no-failover
-master_replid:4df14148c852fe71713120516d0d42f790566727
-master_replid2:0000000000000000000000000000000000000000
-master_repl_offset:365096
-second_repl_offset:-1
-repl_backlog_active:1
-repl_backlog_size:1048576
-repl_backlog_first_byte_offset:361185
-repl_backlog_histlen:3912
-192.168.38.130:6379> 
-
-[root@serverf ~]# redis-cli -h 192.168.38.132
-192.168.38.132:6379> auth passwd
-OK
-192.168.38.132:6379> info replication
+192.168.38.133:6379> info replication
 # Replication
 role:master
-connected_slaves:1
-slave0:ip=192.168.38.130,port=6379,state=online,offset=451313,lag=1
+connected_slaves:2
+slave0:ip=192.168.38.132,port=6379,state=online,offset=253710,lag=1
+slave1:ip=192.168.38.130,port=6379,state=online,offset=253710,lag=0
 master_failover_state:no-failover
-master_replid:4df14148c852fe71713120516d0d42f790566727
-master_replid2:04350abba74a68813d30d88e9b3828d3abdb484a
-master_repl_offset:451456
-second_repl_offset:53522
+master_replid:e704b4e1eba47d4931549090ba513dbf910c504b
+master_replid2:6e8863c12def62ad03ae109d7b9453c2a3e01187
+master_repl_offset:253853
+second_repl_offset:8969
 repl_backlog_active:1
 repl_backlog_size:1048576
 repl_backlog_first_byte_offset:1
-repl_backlog_histlen:451456
-192.168.38.132:6379> 
-
+repl_backlog_histlen:253853
+192.168.38.133:6379> 
 
 ```
 
@@ -226,14 +242,15 @@ Nếu kết quả trả về "Hello from Master", đồng bộ hóa hoạt độ
 port 26379
 daemonize no
 protected-mode no
-bind 0.0.0.0
+bind 192.168.38.132
 
 sentinel monitor mymaster 192.168.38.132 6379 2
-sentinel down-after-milliseconds mymaster 5000
-sentinel failover-timeout mymaster 10000
-sentinel parallel-syncs mymaster 1
+sentinel down-after-milliseconds mymaster 10000
+sentinel failover-timeout mymaster 60000
+sentinel parallel-syncs mymaster 2
 sentinel auth-pass mymaster passwd
-
+requirepass "password"
+sentinel sentinel-pass password
 ```
 Để chạy Sentinel dưới dạng dịch vụ hệ thống: 
 Tạo file dịch vụ (ví dụ: /etc/systemd/system/redis-sentinel.service): 
@@ -348,9 +365,34 @@ Or
 
 Server Seninel
 ```
+firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.38.0/24" port port=6379 protocol=tcp accept'
+
 firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.38.0/24" port port=26379 protocol=tcp accept'
 
 firewall-cmd --reload
+
+firewall-cmd --list-all
+public (active)
+  target: default
+  icmp-block-inversion: no
+  interfaces: ens160
+  sources: 
+  services: cockpit dhcpv6-client ssh
+  ports: 
+  protocols: 
+  forward: yes
+  masquerade: no
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules: 
+	rule family="ipv4" source address="192.168.38.0/24" port port="6379" protocol="tcp" accept
+	rule family="ipv4" source address="192.168.38.0/24" port port="26379" protocol="tcp" accept
+
+[root@servere ~]# netstat -tulpn | grep redis
+tcp        0      0 192.168.38.130:6379     0.0.0.0:*               LISTEN      2132/redis-server 1 
+tcp        0      0 192.168.38.130:26379    0.0.0.0:*               LISTEN      1976/redis-server 1 
+[root@servere ~]# 
 
 ```
 
@@ -372,7 +414,7 @@ firewall-cmd --reload
 ```
 ```bash
 # Server master
-[root@servera ~]# systemctl stop redis
+[root@servere ~]# systemctl stop redis
 
 # Server bat ky - server slave
 [root@serverb ~]# redis-cli -h 192.168.38.130 -p 26379
@@ -398,71 +440,169 @@ firewall-cmd --reload
 
 ```
 ```
-[root@serverf ~]# tail /var/log/redis/sentinel.log 
-1992:X 24 Sep 2025 19:53:15.996 # +failover-end master mymaster 192.168.38.130 6379
-1992:X 24 Sep 2025 19:53:15.996 # +switch-master mymaster 192.168.38.130 6379 192.168.38.132 6379
-1992:X 24 Sep 2025 19:53:15.996 * +slave slave 192.168.38.130:6379 192.168.38.130 6379 @ mymaster 192.168.38.132 6379
-1992:X 24 Sep 2025 19:53:46.014 # +sdown slave 192.168.38.130:6379 192.168.38.130 6379 @ mymaster 192.168.38.132 6379
-1992:X 24 Sep 2025 19:55:24.093 # +sdown sentinel 97e1c87dbbeec2322dd5ce2a62ef2cc30757a4e7 192.168.38.130 26379 @ mymaster 192.168.38.132 6379
-1992:X 24 Sep 2025 19:55:40.752 # +sdown sentinel 78358f926f1cebdcd07f43f4bc7e1dfb10f65f43 192.168.38.133 26379 @ mymaster 192.168.38.132 6379
-1992:X 24 Sep 2025 19:59:51.101 # -sdown sentinel 97e1c87dbbeec2322dd5ce2a62ef2cc30757a4e7 192.168.38.130 26379 @ mymaster 192.168.38.132 6379
-1992:X 24 Sep 2025 20:00:06.972 # +new-epoch 2
-1992:X 24 Sep 2025 20:00:07.500 # -sdown sentinel 78358f926f1cebdcd07f43f4bc7e1dfb10f65f43 192.168.38.133 26379 @ mymaster 192.168.38.132 6379
-1992:X 24 Sep 2025 20:20:35.976 # -sdown slave 192.168.38.130:6379 192.168.38.130 6379 @ mymaster 192.168.38.132 6379
+[root@serverg ~]# tail /var/log/redis/sentinel.log 
+1969:X 25 Sep 2025 10:22:38.210 * +reboot slave 192.168.38.133:6379 192.168.38.133 6379 @ mymaster 192.168.38.130 6379
+1969:X 25 Sep 2025 10:23:23.231 # +sdown master mymaster 192.168.38.130 6379
+1969:X 25 Sep 2025 10:23:23.318 # +new-epoch 4
+1969:X 25 Sep 2025 10:23:23.320 # +vote-for-leader fbbc29d5679414130d934cc582882a4ef75fb544 4
+1969:X 25 Sep 2025 10:23:23.793 # +config-update-from sentinel fbbc29d5679414130d934cc582882a4ef75fb544 192.168.38.132 26379 @ mymaster 192.168.38.130 6379
+1969:X 25 Sep 2025 10:23:23.793 # +switch-master mymaster 192.168.38.130 6379 192.168.38.133 6379
+1969:X 25 Sep 2025 10:23:23.794 * +slave slave 192.168.38.132:6379 192.168.38.132 6379 @ mymaster 192.168.38.133 6379
+1969:X 25 Sep 2025 10:23:23.794 * +slave slave 192.168.38.130:6379 192.168.38.130 6379 @ mymaster 192.168.38.133 6379
+1969:X 25 Sep 2025 10:23:33.823 # +sdown slave 192.168.38.130:6379 192.168.38.130 6379 @ mymaster 192.168.38.133 6379
+1969:X 25 Sep 2025 10:24:38.915 # -sdown slave 192.168.38.130:6379 192.168.38.130 6379 @ mymaster 192.168.38.133 6379
+[root@serverg ~]# 
+
 ```
 
 ```
-[root@serverf ~]# redis-cli -h 192.168.38.130
-192.168.38.130:6379> auth passwd
-OK
-192.168.38.130:6379> info replication
-# Replication
-role:slave
-master_host:192.168.38.132
-master_port:6379
-master_link_status:up
-master_last_io_seconds_ago:0
-master_sync_in_progress:0
-slave_read_repl_offset:365096
-slave_repl_offset:365096
-slave_priority:100
-slave_read_only:1
-replica_announced:1
-connected_slaves:0
-master_failover_state:no-failover
-master_replid:4df14148c852fe71713120516d0d42f790566727
-master_replid2:0000000000000000000000000000000000000000
-master_repl_offset:365096
-second_repl_offset:-1
-repl_backlog_active:1
-repl_backlog_size:1048576
-repl_backlog_first_byte_offset:361185
-repl_backlog_histlen:3912
-192.168.38.130:6379> 
-[root@serverf ~]# redis-cli -h 192.168.38.132
-192.168.38.132:6379> auth paswwd
-(error) WRONGPASS invalid username-password pair or user is disabled.
-192.168.38.132:6379> auth passwd
-OK
-192.168.38.132:6379> info replication
+[root@servere ~]# redis-cli -h 192.168.38.133 -a passwd 
+Warning: Using a password with '-a' or '-u' option on the command line interface may not be safe.
+192.168.38.133:6379> info replication
 # Replication
 role:master
-connected_slaves:1
-slave0:ip=192.168.38.130,port=6379,state=online,offset=451313,lag=1
+connected_slaves:2
+slave0:ip=192.168.38.132,port=6379,state=online,offset=157842,lag=1
+slave1:ip=192.168.38.130,port=6379,state=online,offset=157985,lag=0
 master_failover_state:no-failover
-master_replid:4df14148c852fe71713120516d0d42f790566727
-master_replid2:04350abba74a68813d30d88e9b3828d3abdb484a
-master_repl_offset:451456
-second_repl_offset:53522
+master_replid:e704b4e1eba47d4931549090ba513dbf910c504b
+master_replid2:6e8863c12def62ad03ae109d7b9453c2a3e01187
+master_repl_offset:157985
+second_repl_offset:8969
 repl_backlog_active:1
 repl_backlog_size:1048576
 repl_backlog_first_byte_offset:1
-repl_backlog_histlen:451456
-192.168.38.132:6379> 
+repl_backlog_histlen:157985
+192.168.38.133:6379> 
+
 ```
+```
+[root@serverg ~]# redis-cli -h 192.168.38.133 -p 26379
+192.168.38.133:26379> SENTINEL GET-MASTER-ADDR-BY-NAME mymaster
+1) "192.168.38.133"
+2) "6379"
+192.168.38.133:26379> SENTINEL SENTINELS mymaster
+1)  1) "name"
+    2) "97e1c87dbbeec2322dd5ce2a62ef2cc30757a4e7"
+    3) "ip"
+    4) "192.168.38.130"
+    5) "port"
+    6) "26379"
+    7) "runid"
+    8) "97e1c87dbbeec2322dd5ce2a62ef2cc30757a4e7"
+    9) "flags"
+   10) "sentinel"
+   11) "link-pending-commands"
+   12) "0"
+   13) "link-refcount"
+   14) "1"
+   15) "last-ping-sent"
+   16) "0"
+   17) "last-ok-ping-reply"
+   18) "333"
+   19) "last-ping-reply"
+   20) "333"
+   21) "down-after-milliseconds"
+   22) "10000"
+   23) "last-hello-message"
+   24) "131"
+   25) "voted-leader"
+   26) "?"
+   27) "voted-leader-epoch"
+   28) "0"
+2)  1) "name"
+    2) "fbbc29d5679414130d934cc582882a4ef75fb544"
+    3) "ip"
+    4) "192.168.38.132"
+    5) "port"
+    6) "26379"
+    7) "runid"
+    8) "fbbc29d5679414130d934cc582882a4ef75fb544"
+    9) "flags"
+   10) "sentinel"
+   11) "link-pending-commands"
+   12) "0"
+   13) "link-refcount"
+   14) "1"
+   15) "last-ping-sent"
+   16) "0"
+   17) "last-ok-ping-reply"
+   18) "332"
+   19) "last-ping-reply"
+   20) "332"
+   21) "down-after-milliseconds"
+   22) "10000"
+   23) "last-hello-message"
+   24) "1150"
+   25) "voted-leader"
+   26) "?"
+   27) "voted-leader-epoch"
+   28) "0"
+192.168.38.133:26379> 
+```
+
+
 
 - Cần làm rõ việc bind - service -firewall 
 - giải thích vài tham số cấu hình
 - đặt passwod base64
 - cần tối thiểu mô hình như nào
+- Master: Cho phép read/write. Slave: Chỉ cho phép read. Sentinel: Không truy cập dữ liệu, chỉ giám sát và điều phối failove
 
+Haproxy
+
+```
+[root@serverd ~]# yum list haproxy
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use "rhc" or "subscription-manager" to register.
+
+Installed Packages
+haproxy.x86_64 2.4.22-4.el9 @rhel-9-for-x86_64-appstream-rpms
+```
+```
+yum install haproxy.x86_64 -y
+```
+
+```
+vi /etc/haproxy/haproxy.cfg
+defaults redis
+    mode tcp
+    timeout connect 0s
+    timeout server 0s
+    timeout client 0s
+    timeout check 3s
+listen stats # Define a listen section called "stats"
+  bind *:8080
+  mode http
+  stats enable                        # Enable stats page
+  stats hide-version                  # Hide HAProxy version
+  stats realm HAProxy\ Statistics     # Title text for popup window
+  stats uri /redis-status            # Stats URI
+frontend redis-in
+    bind *:6379
+    default_backend redis-backend
+backend redis-backend
+    option tcp-check
+    tcp-check connect
+    tcp-check send AUTH\ passwd\r\n
+    tcp-check expect string +OK
+    tcp-check send PING\r\n
+    tcp-check expect string +PONG
+    tcp-check send info\ replication\r\n
+    tcp-check expect string role:master
+    tcp-check send QUIT\r\n
+    tcp-check expect string +OK
+    server redis1 192.168.38.130:6379 check inter 1s downinter 1s fastinter 1s fall 1 rise 1
+    server redis2 192.168.38.132:6379 check inter 1s downinter 1s fastinter 1s fall 1 rise 1
+    server redis3 192.168.38.133:6379 check inter 1s downinter 1s fastinter 1s fall 1 rise 1
+[root@serverd ~]# 
+```
+
+```
+systemctl enable haproxy.service 
+systemctl status haproxy.service 
+systemctl start haproxy.service
+```
+![alt text](image.png)
