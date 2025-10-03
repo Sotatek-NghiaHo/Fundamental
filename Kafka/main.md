@@ -1,3 +1,4 @@
+# Kafka HA
 ## Redhat
 
 Install java
@@ -24,7 +25,6 @@ OpenJDK 64-Bit Server VM (Red_Hat-11.0.25.0.9-1) (build 11.0.25+9-LTS, mixed mod
 
 Install kafka 3.0.0
 
-Docs: https://kafka.apache.org/downloads
 
 ```bash
 [root@servere ~]# mkdir /opt/kafka
@@ -171,12 +171,6 @@ firewall-cmd --reload
 ```
 ![alt text](pic/image-4.png)
 
-Docs
-
-```bash
-https://kafka.apache.org/documentation/#java
-https://dev.to/devopsfundamentals/kafka-fundamentals-kafka-high-availability-37pd
-```
 
 vi config/zookeeper.properties 
 
@@ -349,3 +343,14 @@ Xem PID kafka
 [root@servere kafka_2.13-3.0.0]# ps -ef | grep kafka
 kafka       1156       1  0 13:46 ?        00:00:07 java -Xmx512M -Xms512M -server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 
 ```
+
+
+---
+Docs
+
+
+- https://kafka.apache.org/documentation/#java
+
+- https://dev.to/devopsfundamentals/kafka-fundamentals-kafka-high-availability-37pd
+
+- https://kafka.apache.org/downloads
