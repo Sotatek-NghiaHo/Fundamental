@@ -309,7 +309,8 @@ ls /test_series
 
 Port active when done
 
-![alt text](image.png)
+![alt text](pic/image.png)
+
 Test Tạo topic trên server 1:
 
 ```bash
